@@ -1,59 +1,49 @@
 #!/usr/bin/python3
 """
-Script that reads stdin line by line and computes metrics:
-- Input format: <IP Address> - [<date>] "GET /projects/260 HTTP/1.1" <status
-                code> <file size>
-- After every 10 lines and/or a keyboard interruption (CTRL + C), print these
-    statistics from the beginning:
-Example:
-    File size: 5213
-    200: 2
-    401: 1
-    403: 2
-    404: 1
-    405: 1
-    500: 3
+Task: 0. Log Parsing
+File: 0x06-log_parsing/0-stats.py
 """
-import sys
-stcd = {"200": 0, "301": 0, "400": 0, "401": 0,
-        "403": 0, "404": 0, "405": 0, "500": 0}
-summ = 0
+from sys import stdin
 
 
-def prn_stats():
+def printstats(file_size, status_codes):
     """
-    Function that print stats about log
+    This prints statistics at the beginning and every 10 lines
+    This will also be called on a Keyboard interruption
     """
-    global summ
-
-    print('File size: {}'.format(summ))
-    stcdor = sorted(stcd.keys())
-    for each in stcdor:
-        if stcd[each] > 0:
-            print('{}: {}'.format(each, stcd[each]))
+    print("File size: " + str(file_size))
+    for code in sorted(status_codes.keys()):
+        if status_codes[code] > 0:
+            print(code + ": " + str(status_codes[code]))
 
 
-if __name__ == "__main__":
-    cnt = 0
-    try:
-        """ Iter the standar input """
-        for data in sys.stdin:
-            try:
-                fact = data.split(' ')
-                """ If there is a status code """
-                if fact[-2] in stcd:
-                    stcd[fact[-2]] += 1
-                """ If there is a lenght """
-                summ += int(fact[-1])
-            except:
-                pass
-            """ Printing control """
-            cnt += 1
-            if cnt == 10:
-                prn_stats()
-                cnt = 0
-    except KeyboardInterrupt:
-        prn_stats()
-        raise
-    else:
-        prn_stats()
+line_num = 0
+file_size = 0
+status_code = 0
+status_codes = {"200": 0, "301": 0, "400": 0, "401": 0,
+                "403": 0, "404": 0, "405": 0, "500": 0}
+
+try:
+    for line in stdin:
+        line_num += 1
+        split_line = line.split()
+
+        if len(split_line) > 1:
+            file_size += int(split_line[-1])
+
+        if len(split_line) > 2 and split_line[-2].isnumeric():
+            status_code = split_line[-2]
+        else:
+            status_code = 0
+
+        if status_code in status_codes.keys():
+            status_codes[status_code] += 1
+
+        if line_num % 10 == 0:
+            printstats(file_size, status_codes)
+
+    printstats(file_size, status_codes)
+
+except (KeyboardInterrupt):
+    printstats(file_size, status_codes)
+    raise
