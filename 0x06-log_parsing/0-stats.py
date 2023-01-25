@@ -1,49 +1,45 @@
 #!/usr/bin/python3
-"""
-Task: 0. Log Parsing
-File: 0x06-log_parsing/0-stats.py
-"""
-from sys import stdin
+"""Script to get stats from a request"""
 
+import sys
 
-def printstats(file_size, status_codes):
-    """
-    This prints statistics at the beginning and every 10 lines
-    This will also be called on a Keyboard interruption
-    """
-    print("File size: " + str(file_size))
-    for code in sorted(status_codes.keys()):
-        if status_codes[code] > 0:
-            print(code + ": " + str(status_codes[code]))
-
-
-line_num = 0
-file_size = 0
-status_code = 0
-status_codes = {"200": 0, "301": 0, "400": 0, "401": 0,
-                "403": 0, "404": 0, "405": 0, "500": 0}
+codes = {}
+status_codes = ['200', '301', '400', '401', '403', '404', '405', '500']
+count = 0
+size = 0
 
 try:
-    for line in stdin:
-        line_num += 1
-        split_line = line.split()
-
-        if len(split_line) > 1:
-            file_size += int(split_line[-1])
-
-        if len(split_line) > 2 and split_line[-2].isnumeric():
-            status_code = split_line[-2]
+    for ln in sys.stdin:
+        if count == 10:
+            print("File size: {}".format(size))
+            for key in sorted(codes):
+                print("{}: {}".format(key, codes[key]))
+            count = 1
         else:
-            status_code = 0
+            count += 1
 
-        if status_code in status_codes.keys():
-            status_codes[status_code] += 1
+        ln = ln.split()
 
-        if line_num % 10 == 0:
-            printstats(file_size, status_codes)
+        try:
+            size = size + int(ln[-1])
+        except (IndexError, ValueError):
+            pass
 
-    printstats(file_size, status_codes)
+        try:
+            if ln[-2] in status_codes:
+                if codes.get(ln[-2], -1) == -1:
+                    codes[ln[-2]] = 1
+                else:
+                    codes[ln[-2]] += 1
+        except IndexError:
+            pass
 
-except (KeyboardInterrupt):
-    printstats(file_size, status_codes)
+    print("File size: {}".format(size))
+    for key in sorted(codes):
+        print("{}: {}".format(key, codes[key]))
+
+except KeyboardInterrupt:
+    print("File size: {}".format(size))
+    for key in sorted(codes):
+        print("{}: {}".format(key, codes[key]))
     raise
